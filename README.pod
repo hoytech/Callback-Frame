@@ -19,7 +19,7 @@ Callback::Frame - Preserve error handlers and "local" variables across callbacks
           catch => sub {
                      my $stack_trace = shift;
                      print $stack_trace;
-                     ## Also, $@ is set to "some error"
+                     ## Also, $@ is set to "some error at ..."
                    }
     )->();
 
@@ -27,10 +27,10 @@ Callback::Frame - Preserve error handlers and "local" variables across callbacks
 
 This will print something like:
 
-    some error at tp.pl line 9.
+    some error at synopsis.pl line 9.
     ----- Callback::Frame stack-trace -----
-    tp.pl:10 - frame #1
-    tp.pl:17 - base frame
+    synopsis.pl:10 - frame #1
+    synopsis.pl:17 - base frame
 
 
 =head1 BACKGROUND
@@ -107,9 +107,9 @@ Now we see the desired error message:
 
 =head1 USAGE
 
-This module exports one function, C<frame>. This function requires at least a C<code> object which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created.
+This module exports one function, C<frame>. This function requires at least a C<code> object which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
-B<IMPORTANT NOTE>: All callbacks that will be invoked outside the dynamic environment of your current frame should be wrapped in a new C<frame> call so that the dynamic environment is re-applied correctly when the callback is invoked.
+B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be wrapped in a new C<frame> call so that the dynamic environment will be correctly re-applied when the callback is invoked.
 
 In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
 
@@ -141,21 +141,21 @@ But the bindings are only global for a little while at a time. After a while the
 
 OK, to make this concrete, after running this bit of code the binding containing C<123> is lost forever:
 
-    our $foo;
+    our $foo = 1;
     my $cb;
 
     {
-      local $foo = 123;
+      local $foo = 2;
       $cb = sub {
         return $foo;
       };
     }
 
-    $cb->(); # returns undef
+    print "$foo\n";       # 1
+    print $cb->() . "\n"; # 1  <- not 2!
+    print "$foo\n";       # 1
 
 Here's a way to "fix" that using Callback::Frame:
-
-    use Callback::Frame;
 
     our $foo = 1;
     my $cb;
@@ -169,12 +169,10 @@ Here's a way to "fix" that using Callback::Frame:
     })->();
 
     print "$foo\n";       # 1
-    print $cb->() . "\n"; # 2
+    print $cb->() . "\n"; # 2  <- hooray!
     print "$foo\n";       # 1
 
 Don't be fooled into thinking that this is a lexical binding though. While the variable C<$foo> points to the binding containing C<2>, all parts of the program will see this binding as demonstrated in the following example:
-
-    use Callback::Frame;
 
     our $foo = 1;
     my $cb;
@@ -192,7 +190,7 @@ Don't be fooled into thinking that this is a lexical binding though. While the v
     })->();
 
     print "$foo\n";       # 1
-    print $cb->() . "\n"; # 2
+    print $cb->() . "\n"; # 2  <- still 2
     print "$foo\n";       # 1
 
 
@@ -212,15 +210,19 @@ All variable names must be fully package qualified. The easiest way to do ensure
 
 The Callback::Frame philosophy is that we actually like callback style and instead just want to simplify the recreation of dynamic environments as necessary. Ideally, adding frame support to an existing asynchronous application should be as easy as possible (so it shouldn't force you to pass extra parameters around). Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
 
-The C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
+This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
 This module depends on C<Guard> to ensure that even when exceptions are thrown, C<local> binding updates aren't lost.
 
-L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem but don't use dynamic bindings so you need to pass around a callback everywhere and call that in the event of any errors. If some code C<die>s the appropriate error callback won't be automatically called.  Unlike the above two modules, Callback::Frame is not related in any way to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
+L<AnyEvent::Debug> is a very interesting and useful module that provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem but don't use dynamic bindings so you need to pass around a callback everywhere and call that in the event of any errors (if some code C<die>s the appropriate error callback won't be automatically called). Unlike the AnyEvent::* modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
 
-Not sure how L<POE> applications deal with this... There's L<POE::Filter::ErrorProof> and ... ?
+Miscellaneous other modules: L<IO::Lambda::Backtrace>, L<POE::Filter::ErrorProof>
 
-L<Chapter 2 of Let Over Lambda|http://letoverlambda.com/index.cl/guest/chap2.html>
+Python Tornado's L<StackContext|http://www.tornadoweb.org/documentation/stack_context.html> and C<async_callback>.
+
+L<Let Over Lambda, Chapter 2|http://letoverlambda.com/index.cl/guest/chap2.html>
+
+L<UNWIND-PROTECT vs. Continuations|http://www.nhplace.com/kent/PFAQ/unwind-protect-vs-continuations-original.html>
 
 
 
