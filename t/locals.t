@@ -3,11 +3,15 @@ package junkpackage;
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 17; 
+use Test::More tests => 18; 
 
 
 our $junkvar = 1;
 our $junkvar2;
+
+sub global_junkvar_returner {
+  return $junkvar;
+}
 
 my ($cb, $cb2, $cb3);
 
@@ -16,6 +20,7 @@ frame(local => 'junkpackage::junkvar',
       code => sub {
 
   is($junkvar, undef);
+  is(global_junkvar_returner(), undef);
   is($junkvar2, undef);
 
   $junkvar = 5;
