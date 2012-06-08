@@ -122,8 +122,6 @@ sub generate_local_wrapped_code {
     $codestr .= qq{ local \$$k = \${\$local_refs->{q{$k}}}; };
   }
 
-  ## FIXME: these should be protected by a guard
-
   $codestr .= ' scope_guard { ';
   foreach my $k (keys %$local_refs) {
     $codestr .= qq{ \${\$local_refs->{q{$k}}} = \$$k; };
@@ -384,3 +382,13 @@ This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
+
+
+
+
+
+
+
+TODO
+
+Document rationale behind test cases
