@@ -11,7 +11,8 @@ Callback::Frame - Preserve error handlers and "local" variables across callbacks
 
     frame(name => "base frame",
           code => sub {
-                    $callback = frame("frame #1", sub {
+                    $callback = frame(name => "frame #1",
+                                      code => sub {
                       die "some error";
                     });
                   },
@@ -26,10 +27,10 @@ Callback::Frame - Preserve error handlers and "local" variables across callbacks
 
 This will print something like:
 
-    some error at synopsis.pl line 14.
+    some error at tp.pl line 9.
     ----- Callback::Frame stack-trace -----
-    synopsis.pl:15 - frame #1
-    synopsis.pl:17 - base frame
+    tp.pl:10 - frame #1
+    tp.pl:17 - base frame
 
 
 =head1 BACKGROUND
@@ -52,7 +53,9 @@ Sometimes people call these anonymous functions that reference variables in thei
 
 =head1 DESCRIPTION
 
-The problem that this module solves is that although closures preserve their lexical environment, they don't preserve their dynamic environment. For example, take the following piece of B<broken> code:
+The problem that this module solves is that although closures preserve their lexical environment, they don't preserve their dynamic environment.
+
+Take the following piece of B<broken> code:
 
     use AnyEvent;
 
@@ -99,7 +102,7 @@ Now we see the desired error message:
 
     Oops: some error at tp3.pl line 10.
 
-C<frame> returns an anonymous callback which is a wrapper around your code parameter that resets the dynamic environment for you when it is invoked.
+This module exports one function, C<frame>. This function requires at least a C<code> object which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created.
 
 B<IMPORTANT NOTE>: All callbacks that will be invoked outside a frame (or even from a different frame) should be wrapped in C<frame> so that the dynamic environment is applied correctly when the callback is invoked.
 
@@ -233,8 +236,7 @@ Doug Hoyte, C<< <doug@hcsw.org> >>
 
 Copyright 2012 Doug Hoyte.
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 
 =cut
