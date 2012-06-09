@@ -8,6 +8,7 @@ require Exporter;
 use base 'Exporter';
 our @EXPORT = qw(frame);
 
+use Scalar::Util;
 use Carp qw/croak/;
 use Guard;
 
@@ -48,7 +49,6 @@ sub frame {
     my $orig_error = $@;
 
     my $cb_address = "$ret_cb";
-    $active_frames->{$cb_address} = undef;
 
     local $top_of_stack = {
       name => $name,
@@ -58,6 +58,9 @@ sub frame {
         delete $active_frames->{$cb_address};
       },
     };
+
+    $active_frames->{$cb_address} = $top_of_stack;
+    Scalar::Util::weaken($active_frames->{$cb_address});
 
     $top_of_stack->{catcher} = $catcher if defined $catcher;
     $top_of_stack->{locals} = $locals if defined $locals;
@@ -99,14 +102,14 @@ sub frame {
 }
 
 
-sub is_frame {
+sub get_frame {
   my $coderef = shift;
 
-  return 0 unless ref $coderef;
+  return unless ref $coderef;
 
-  return 1 if exists $active_frames->{$coderef};
+  return $active_frames->{$coderef} if exists $active_frames->{$coderef};
 
-  return 0;
+  return;
 }
 
 
@@ -282,7 +285,7 @@ B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environ
 
 In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
 
-Libraries that automatically wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame.
+Libraries that wrap callbacks in frames can use the C<Callback::Frame::get_frame()> function to determine if a given callback is already wrapped in a frame. It returns undef if the passed in callback is not wrapped in a frame, otherwise it uses a true value that is suitable for use in C<Callback::Frame::run_in_frame()>.
 
 You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
 
