@@ -113,6 +113,8 @@ B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environ
 
 In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
 
+Libraries that automatically wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame.
+
 
 
 =head1 NESTING AND STACK-TRACES
