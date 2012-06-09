@@ -424,6 +424,4 @@ This program is free software; you can redistribute it and/or modify it under th
 
 TODO
 
-* Document rationale behind test cases
-
-* Find faster way to restore locals
+* Find better/faster way to restore locals

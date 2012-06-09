@@ -3,6 +3,11 @@ use strict;
 use Callback::Frame;
 use Test::More tests => 15; 
 
+## This test verifies that you can catch an error, then throw
+## another error. The next deepest error handler will then be
+## found and invoked, up until the point where there are no more
+## handlers, then an unhandled die will be invoked.
+
 
 my $cb;
 my $counter = 0;

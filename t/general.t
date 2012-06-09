@@ -4,6 +4,16 @@ use Callback::Frame;
 use Test::More tests => 29; 
 
 
+## This test exercises the general functionality related to
+## exception handlers.
+##   * errors can be caught
+##   * stack traces are generated correctly
+##   * is_frame can identify frames
+##   * resources are cleaned up
+##   * Callback::Frame::top_of_stack is re-instated
+
+
+
 my ($cb, $cb2, $cb3);
 my $counter = 0;
 my $tos_at_error_site;

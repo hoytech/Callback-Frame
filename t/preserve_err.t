@@ -3,6 +3,11 @@ use strict;
 use Callback::Frame;
 use Test::More tests => 6; 
 
+## This test verifies that the value of $@ at the time when the frame
+## callback is called should be stored and when the wrapped code that
+## was passed into the frame is invoked, $@ will be restored to the
+## backed up value.
+
 
 my ($cb);
 

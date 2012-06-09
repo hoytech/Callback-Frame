@@ -6,6 +6,13 @@ use Callback::Frame;
 use Test::More tests => 19; 
 
 
+## This test verifies local bindings in the frame are backed up and
+## restored properly. Also, it verifies local variable shadowing
+## works OK and that you can install multiple local bindings in the
+## same frame. 
+
+
+
 our $junkvar = 1;
 our $junkvar2;
 

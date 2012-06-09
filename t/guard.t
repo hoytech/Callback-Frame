@@ -3,6 +3,10 @@ use strict;
 use Callback::Frame;
 use Test::More tests => 7; 
 
+## This test throws an exception after a local binding has been modified
+## but before it has had a chance to be copied into the locals element
+## of the frame. The guard is used to detect this and copy them anyways.
+
 
 my ($cb, $cb2);
 
