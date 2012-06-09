@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 6; 
+use Test::More tests => 7; 
 
 
 my ($cb, $cb2);
@@ -32,3 +32,7 @@ $cb->();
 is($foo, 123);
 is($cb2->(), 234);
 is($foo, 123);
+
+
+$cb = $cb2 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 0);

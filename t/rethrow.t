@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 14; 
+use Test::More tests => 15; 
 
 
 my $cb;
@@ -55,3 +55,9 @@ frame(code => sub {
 is($counter++, 4);
 $cb->();
 is($counter++, 8);
+
+
+
+
+$cb = undef;
+is(scalar keys %$Callback::Frame::active_frames, 0);

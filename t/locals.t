@@ -3,7 +3,7 @@ package junkpackage;
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 18; 
+use Test::More tests => 19; 
 
 
 our $junkvar = 1;
@@ -71,3 +71,9 @@ $cb3->();
 
 is($junkvar, 1);
 is($junkvar2, undef);
+
+
+
+
+$cb = $cb2 = $cb3 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 0);
