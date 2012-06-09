@@ -13,6 +13,7 @@ use Guard;
 
 
 our $top_of_stack;
+our $active_frames = {};
 
 
 sub frame {
@@ -43,12 +44,19 @@ sub frame {
 
   my $down_frame = $top_of_stack;
 
-  return sub {
+  my $ret_cb; $ret_cb = sub {
     my $orig_error = $@;
+
+    my $cb_address = "$ret_cb";
+    $active_frames->{$cb_address} = undef;
 
     local $top_of_stack = {
       name => $name,
       down => $down_frame,
+      guard => guard {
+        undef $ret_cb;
+        delete $active_frames->{$cb_address};
+      },
     };
 
     $top_of_stack->{catcher} = $catcher if defined $catcher;
@@ -86,6 +94,19 @@ sub frame {
 
     return $val;
   };
+
+  return $ret_cb;
+}
+
+
+sub is_frame {
+  my $coderef = shift;
+
+  return 0 unless ref $coderef;
+
+  return 1 if exists $active_frames->{$coderef};
+
+  return 0;
 }
 
 
@@ -406,5 +427,3 @@ TODO
 * Document rationale behind test cases
 
 * Find faster way to restore locals
-
-* A way to determine if a given CODEREF was created by frame()

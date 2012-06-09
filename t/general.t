@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 17; 
+use Test::More tests => 29; 
 
 
 my ($cb, $cb2, $cb3);
@@ -50,3 +50,27 @@ $cb3->();
 is($counter++, 8);
 
 ok(!$Callback::Frame::top_of_stack);
+
+
+## is_frame
+
+ok(!Callback::Frame::is_frame($tos_at_error_site));
+ok(Callback::Frame::is_frame($cb));
+ok(Callback::Frame::is_frame($cb2));
+ok(Callback::Frame::is_frame($cb3));
+ok(!Callback::Frame::is_frame("$cb"));
+ok(!Callback::Frame::is_frame($cb + 0));
+ok(!Callback::Frame::is_frame(sub { }));
+
+## Verify resource cleanup
+
+is(scalar keys %$Callback::Frame::active_frames, 4);
+
+$tos_at_error_site = undef;
+is(scalar keys %$Callback::Frame::active_frames, 3);
+$cb3 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 2);
+$cb2 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 1);
+$cb = undef;
+is(scalar keys %$Callback::Frame::active_frames, 0);
