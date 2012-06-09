@@ -76,7 +76,7 @@ The intent behind the C<eval> above is obviously to catch any exceptions thrown 
 
     EV: error in callback (ignoring): some error at broken.pl line 6.
 
-(The above applies to L<EV> which is a well-designed event loop. Other event loops might fail catastrophically and, for example, start busy looping.)
+(The above applies to L<EV> which is a well-designed event loop. Other event loops may fail more catastrophically.)
 
 So the root of the problem is that the dynamic environment has not been preserved. In this case it is the dynamic exception handlers that were not preserved. In some other cases we would like to preserve dynamically scoped (aka "local") variables (see below).
 
@@ -107,7 +107,7 @@ Now we see the desired error message:
 
 =head1 USAGE
 
-This module exports one function, C<frame>. This function requires at least a C<code> object which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
+This module exports one function, C<frame>. This function requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
 B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be wrapped in a new C<frame> call so that the dynamic environment will be correctly re-applied when the callback is invoked.
 
@@ -115,7 +115,7 @@ In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters w
 
 Libraries that automatically wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame.
 
-You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. Whenever this variable is defined, then a frame is being executed.
+You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
 
 
 
@@ -213,6 +213,8 @@ Objects stored in local bindings managed by Callback::Frame will not be destroye
 
 
 =head1 SEE ALSO
+
+L<The Callback::Frame github repo|https://github.com/hoytech/Callback-Frame>
 
 The Callback::Frame philosophy is that we actually like callback style and instead just want to simplify the reseting of dynamic environments as necessary. This module should make adding error handling support to an existing asynchronous application should be as easy as possible so it shouldn't force you to pass extra parameters around. Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
 
