@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 6; 
+use Test::More tests => 7; 
 
 ## This test verifies that the value of $@ at the time when the frame
 ## callback is called should be stored and when the wrapped code that
@@ -43,5 +43,6 @@ is($foo, 123);
 
 
 
+is(scalar keys %$Callback::Frame::active_frames, 1);
 $cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);

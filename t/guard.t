@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 7; 
+use Test::More tests => 9; 
 
 ## This test throws an exception after a local binding has been modified
 ## but before it has had a chance to be copied into the locals element
@@ -38,5 +38,9 @@ is($cb2->(), 234);
 is($foo, 123);
 
 
-$cb = $cb2 = undef;
+## $cb and $cb2 are siblings
+is(scalar keys %$Callback::Frame::active_frames, 1);
+$cb2 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 1);
+$cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);

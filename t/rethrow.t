@@ -1,7 +1,7 @@
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 15; 
+use Test::More tests => 16; 
 
 ## This test verifies that you can catch an error, then throw
 ## another error. The next deepest error handler will then be
@@ -64,5 +64,6 @@ is($counter++, 8);
 
 
 
+is(scalar keys %$Callback::Frame::active_frames, 1);
 $cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);

@@ -3,7 +3,7 @@ package junkpackage;
 use strict;
 
 use Callback::Frame;
-use Test::More tests => 19; 
+use Test::More tests => 22; 
 
 
 ## This test verifies local bindings in the frame are backed up and
@@ -82,5 +82,10 @@ is($junkvar2, undef);
 
 
 
-$cb = $cb2 = $cb3 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 3);
+$cb2 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 3);
+$cb3 = undef;
+is(scalar keys %$Callback::Frame::active_frames, 1);
+$cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);
