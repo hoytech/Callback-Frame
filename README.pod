@@ -115,6 +115,8 @@ In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters w
 
 Libraries that automatically wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame.
 
+You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. Whenever this variable is defined, then a frame is being executed.
+
 
 
 =head1 NESTING AND STACK-TRACES
@@ -141,7 +143,7 @@ Because any code in any file, function, or package can access a dynamic variable
 
 But the bindings are only global for a little while at a time. After a while they will go out of scope and then they are no longer visible at all. Or, sometimes they get "shadowed" by some other binding and come back again later.
 
-OK, to make this concrete, after running this bit of code the binding containing C<123> is lost forever:
+OK, to make this concrete, after running this bit of code the binding containing C<2> is lost forever:
 
     our $foo = 1;
     my $cb;
@@ -206,11 +208,13 @@ Note that if you have both C<catch> and C<local> elements in a frame, in the eve
 
 All variable names must be fully package qualified. The easiest way to do ensure that is to just use the ugly C<__PACKAGE__> technique.
 
+Objects stored in local bindings managed by Callback::Frame will not be destroyed until all references to the frame-wrapped callback that contains the binding, along with all references to any deeper frames, are freed.
+
 
 
 =head1 SEE ALSO
 
-The Callback::Frame philosophy is that we actually like callback style and instead just want to simplify the recreation of dynamic environments as necessary. Ideally, adding frame support to an existing asynchronous application should be as easy as possible (so it shouldn't force you to pass extra parameters around). Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
+The Callback::Frame philosophy is that we actually like callback style and instead just want to simplify the reseting of dynamic environments as necessary. This module should make adding error handling support to an existing asynchronous application should be as easy as possible so it shouldn't force you to pass extra parameters around. Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
