@@ -43,27 +43,33 @@ sub frame {
   defined $code || croak "frame needs a 'code' callback";
 
 
-  my $down_frame = $top_of_stack;
+  my ($ret_cb, $internal_cb);
 
-  my $ret_cb; $ret_cb = sub {
+  $ret_cb = sub {
+    return $internal_cb->(@_);
+  };
+
+  my $cb_address = "$ret_cb";
+
+  my $new_frame = {
+    name => $name,
+    down => $top_of_stack,
+    guard => guard {
+      undef $ret_cb;
+      delete $active_frames->{$cb_address};
+    },
+  };
+
+  $new_frame->{catcher} = $catcher if defined $catcher;
+  $new_frame->{locals} = $locals if defined $locals;
+
+  $active_frames->{$cb_address} = $new_frame;
+  Scalar::Util::weaken($active_frames->{$cb_address});
+
+  $internal_cb = sub {
     my $orig_error = $@;
 
-    my $cb_address = "$ret_cb";
-
-    local $top_of_stack = {
-      name => $name,
-      down => $down_frame,
-      guard => guard {
-        undef $ret_cb;
-        delete $active_frames->{$cb_address};
-      },
-    };
-
-    $active_frames->{$cb_address} = $top_of_stack;
-    Scalar::Util::weaken($active_frames->{$cb_address});
-
-    $top_of_stack->{catcher} = $catcher if defined $catcher;
-    $top_of_stack->{locals} = $locals if defined $locals;
+    local $top_of_stack = $new_frame;
 
     $code = generate_local_wrapped_code($top_of_stack, $code);
 
@@ -98,7 +104,10 @@ sub frame {
     return $val;
   };
 
-  return $ret_cb;
+  my $final_cb = $ret_cb;
+  Scalar::Util::weaken($ret_cb);
+
+  return $final_cb;
 }
 
 

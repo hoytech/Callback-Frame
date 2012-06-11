@@ -82,10 +82,10 @@ is($junkvar2, undef);
 
 
 
-is(scalar keys %$Callback::Frame::active_frames, 3);
+is(scalar keys %$Callback::Frame::active_frames, 4);
 $cb2 = undef;
-is(scalar keys %$Callback::Frame::active_frames, 3);
+is(scalar keys %$Callback::Frame::active_frames, 4);
 $cb3 = undef;
-is(scalar keys %$Callback::Frame::active_frames, 1);
+is(scalar keys %$Callback::Frame::active_frames, 2);
 $cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);

@@ -64,6 +64,6 @@ is($counter++, 8);
 
 
 
-is(scalar keys %$Callback::Frame::active_frames, 1);
+is(scalar keys %$Callback::Frame::active_frames, 2);
 $cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);

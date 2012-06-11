@@ -38,9 +38,8 @@ is($cb2->(), 234);
 is($foo, 123);
 
 
-## $cb and $cb2 are siblings
-is(scalar keys %$Callback::Frame::active_frames, 1);
+is(scalar keys %$Callback::Frame::active_frames, 3);
 $cb2 = undef;
-is(scalar keys %$Callback::Frame::active_frames, 1);
+is(scalar keys %$Callback::Frame::active_frames, 2);
 $cb = undef;
 is(scalar keys %$Callback::Frame::active_frames, 0);
