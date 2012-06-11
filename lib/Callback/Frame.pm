@@ -127,14 +127,14 @@ sub frame {
 }
 
 
-sub get_frame {
+sub is_frame {
   my $coderef = shift;
 
-  return unless ref $coderef;
+  return 0 unless ref $coderef;
 
-  return $active_frames->{$coderef} if exists $active_frames->{$coderef};
+  return 1 if exists $active_frames->{$coderef};
 
-  return;
+  return 0;
 }
 
 
@@ -310,7 +310,9 @@ B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environ
 
 In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
 
-Libraries that wrap callbacks in frames can use the C<Callback::Frame::get_frame()> function to determine if a given callback is already wrapped in a frame. It returns undef if the passed in callback is not wrapped in a frame, otherwise it uses a true value that is suitable for use in C<Callback::Frame::run_in_frame()>.
+If you wish to run a coderef inside an existing frame's dynamic environment, you can create a new frame and pass in an existing frame as the C<existing_frame> parameter. When the frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions inside a callback's dynamic environment.
+
+Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the passed in callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>.
 
 You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
 

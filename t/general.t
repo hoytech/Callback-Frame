@@ -8,7 +8,7 @@ use Test::More tests => 29;
 ## exception handlers.
 ##   * errors can be caught
 ##   * stack traces are generated correctly
-##   * get_frame can identify frames
+##   * is_frame can identify frames
 ##   * resources are cleaned up
 ##   * Callback::Frame::top_of_stack mainained correctly
 
@@ -62,15 +62,15 @@ is($counter++, 8);
 ok(!$Callback::Frame::top_of_stack);
 
 
-## get_frame
+## is_frame
 
-ok(!Callback::Frame::get_frame($tos_at_error_site));
-ok(Callback::Frame::get_frame($cb));
-ok(Callback::Frame::get_frame($cb2));
-ok(Callback::Frame::get_frame($cb3));
-ok(!Callback::Frame::get_frame("$cb"));
-ok(!Callback::Frame::get_frame($cb + 0));
-ok(!Callback::Frame::get_frame(sub { }));
+ok(!Callback::Frame::is_frame($tos_at_error_site));
+ok(Callback::Frame::is_frame($cb));
+ok(Callback::Frame::is_frame($cb2));
+ok(Callback::Frame::is_frame($cb3));
+ok(!Callback::Frame::is_frame("$cb"));
+ok(!Callback::Frame::is_frame($cb + 0));
+ok(!Callback::Frame::is_frame(sub { }));
 
 ## Verify resource cleanup
 
