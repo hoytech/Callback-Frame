@@ -18,7 +18,7 @@ our $active_frames = {};
 
 
 sub frame {
-  my ($name, $code, $catcher, $locals);
+  my ($name, $code, $catcher, $locals, $existing_frame);
 
   while ((my $k, my $v, @_) = @_) {
     if ($k eq 'name') {
@@ -29,6 +29,8 @@ sub frame {
       $catcher = $v;
     } elsif ($k eq 'local') {
       $locals->{$v} = undef;
+    } elsif ($k eq 'existing_frame') {
+      $existing_frame = $v;
     } else {
       croak "Unknown frame option: $k";
     }
@@ -42,6 +44,14 @@ sub frame {
 
   defined $code || croak "frame needs a 'code' callback";
 
+  my $existing_top_of_stack;
+  if (defined $existing_frame) {
+    $existing_top_of_stack = $active_frames->{"$existing_frame"};
+    croak "existing_frame isn't a frame" unless $existing_top_of_stack;
+    croak "can't install new catcher if using existing_frame" if defined $catcher;
+    croak "can't install new local if using existing_frame" if defined $locals;
+  }
+
 
   my ($ret_cb, $internal_cb);
 
@@ -51,20 +61,26 @@ sub frame {
 
   my $cb_address = "$ret_cb";
 
-  my $new_frame = {
-    name => $name,
-    down => $top_of_stack,
-    guard => guard {
-      undef $ret_cb;
-      delete $active_frames->{$cb_address};
-    },
-  };
+  my $new_frame;
 
-  $new_frame->{catcher} = $catcher if defined $catcher;
-  $new_frame->{locals} = $locals if defined $locals;
+  if ($existing_top_of_stack) {
+    $new_frame = $existing_top_of_stack;
+  } else {
+    $new_frame = {
+      name => $name,
+      down => $top_of_stack,
+      guard => guard {
+        undef $ret_cb;
+        delete $active_frames->{$cb_address};
+      },
+    };
 
-  $active_frames->{$cb_address} = $new_frame;
-  Scalar::Util::weaken($active_frames->{$cb_address});
+    $new_frame->{catcher} = $catcher if defined $catcher;
+    $new_frame->{locals} = $locals if defined $locals;
+
+    $active_frames->{$cb_address} = $new_frame;
+    Scalar::Util::weaken($active_frames->{$cb_address});
+  }
 
   $internal_cb = sub {
     my $orig_error = $@;
