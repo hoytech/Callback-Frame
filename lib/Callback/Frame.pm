@@ -310,9 +310,9 @@ B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environ
 
 In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
 
-If you wish to run a coderef inside an existing frame's dynamic environment, you can create a new frame and pass in an existing frame as the C<existing_frame> parameter. When the frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions inside a callback's dynamic environment.
+If you wish to run a coderef inside an existing frame's dynamic environment, when creating a frame you can pass in an existing frame as the C<existing_frame> parameter. When this frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions inside a callback and for extracting/setting a callback's local variables.
 
-Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the passed in callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>.
+Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>.
 
 You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
 
@@ -322,11 +322,11 @@ You should almost never need to, but the internal frame stack can be accessed at
 
 Frames can be nested. When an exception is raised, the most deeply nested C<catch> handler is invoked. If this handler itself throws an error, the next most deeply nested handler is invoked with the new exception but the original stack trace.
 
-When a handler is called, not only is C<$@> set, but also a stack-trace string is passed in as the only argument. All frames will be listed, starting with the most deeply nested frame first.
+When a C<catch> handler is called, not only is C<$@> set, but also a stack-trace string is passed in as the first argument. All frames will be listed in this stack-trace, starting with the most deeply nested frame.
 
-If you want you can use simple frame names like C<"accepted"> but if you are recording error messages in a log you might find it useful to name your frames things like C<"accepted connection from $ip:$port at $date"> and C<"connecting to $host (timeout = $timeout seconds)">.
+If you want you can use simple frame names like C<"accepted"> but if you are recording error messages in a log you might find it useful to name your frames things like C<"accepted connection from $ip:$port at $time"> and C<"connecting to $host (timeout = $timeout seconds)">.
 
-All frames you omit the name from will be shown as C<"ANONYMOUS FRAME"> in stack-traces which is fine too.
+All frames you omit the name from will be shown as C<"ANONYMOUS FRAME"> in stack-traces.
 
 
 
@@ -334,13 +334,11 @@ All frames you omit the name from will be shown as C<"ANONYMOUS FRAME"> in stack
 
 In the same way that using C<catch> as described above preserves the dynamic environment of error handlers, C<local> preserves the dynamic environment of variables. Of course, the scope of these bindings is not actually local in the real sense of the word, only in the perl sense.
 
-Technically, C<local> maintains the dynamic environment of B<bindings>. Although perl coders often ignore the distinction, lisp coders are careful to distinguish between variables and bindings. See, when a lexical binding is created, it is there "forever" -- or at least while it is still reachable by your program in some way according to the rules of lexical scoping. Therefore, lexical variables are statically mapped to bindings and it is redundant to distinguish between lexical variables and bindings.
+Technically, C<local> maintains the dynamic environment of B<bindings>. Although perl coders often ignore the distinction, lisp coders are careful to distinguish between variables and bindings. See, when a lexical binding is created, it is there "forever" -- or at least until it is no longer reachable by your program according to the rules of lexical scoping. Therefore, lexical variables are statically mapped to bindings and it is redundant to distinguish between lexical variables and bindings.
 
-However, with dynamic variables the same variable can refer to different bindings at different times. That's why they are called dynamic variables and lexical variables are called "static" variables.
+However, with dynamic variables the same variable can refer to different bindings at different times. That's why they are called "dynamic" variables and lexical variables are called "static" variables.
 
-Because any code in any file, function, or package can access a dynamic variable, they are the opposite of local. They are global. 
-
-But the bindings are only global for a little while at a time. After a while they will go out of scope and then they are no longer visible at all. Or, sometimes they get "shadowed" by some other binding and come back again later.
+Because any code in any file, function, or package can access a dynamic variable, they are the opposite of local. They are global. However, the bindings are only global for a little while at a time. After a while they will go out of scope and then they are no longer visible at all. Or sometimes they will get "shadowed" by some other binding and will come back again later.
 
 OK, to make this concrete, after running this bit of code the binding containing C<2> is lost forever:
 
@@ -405,7 +403,7 @@ You can install multiple local variables in the same frame:
 
 Note that if you have both C<catch> and C<local> elements in a frame, in the event of an error the local bindings will B<not> be present inside the C<catch> handler (use two frames if you need this).
 
-All variable names must be fully package qualified. The easiest way to do ensure that is to just use the ugly C<__PACKAGE__> technique.
+All variable names must be fully package qualified. The easiest way to do this is to use the ugly C<__PACKAGE__> technique.
 
 Objects stored in local bindings managed by Callback::Frame will not be destroyed until all references to the frame-wrapped callback that contains the binding, along with all references to any deeper frames, are freed.
 
@@ -415,17 +413,17 @@ Objects stored in local bindings managed by Callback::Frame will not be destroye
 
 L<The Callback::Frame github repo|https://github.com/hoytech/Callback-Frame>
 
-The Callback::Frame philosophy is that we actually like callback style and instead just want to simplify the reseting of dynamic environments as necessary. This module should make adding error handling support to an existing asynchronous application should be as easy as possible so it shouldn't force you to pass extra parameters around. Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
+The Callback::Frame philosophy is that we actually like callback style and just want to simplify the reseting of dynamic environments as necessary. This module should make adding error handling support to an existing asynchronous application as easy as possible (it shouldn't force you to pass extra parameters around). Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
 This module depends on C<Guard> to ensure that even when exceptions are thrown, C<local> binding updates aren't lost.
 
-L<AnyEvent::Debug> is a very interesting and useful module that provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem but don't use dynamic bindings so you need to pass around a callback everywhere and call that in the event of any errors (if some code C<die>s the appropriate error callback won't be automatically called). Unlike the AnyEvent::* modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
+L<AnyEvent::Debug> is a very interesting and useful module that provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem. Unlike these modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
 
 Miscellaneous other modules: L<IO::Lambda::Backtrace>, L<POE::Filter::ErrorProof>
 
-Python Tornado's L<StackContext|http://www.tornadoweb.org/documentation/stack_context.html> and C<async_callback>.
+Python Tornado's L<StackContext|http://www.tornadoweb.org/documentation/stack_context.html> and C<async_callback>
 
 L<Let Over Lambda, Chapter 2|http://letoverlambda.com/index.cl/guest/chap2.html>
 
@@ -435,7 +433,7 @@ L<UNWIND-PROTECT vs. Continuations|http://www.nhplace.com/kent/PFAQ/unwind-prote
 
 =head1 BUGS
 
-For now, C<local> bindings can only be created in the scalar namespace. None of the other nifty things that local can do (like localising a hash table value) are supported yet either.
+For now, C<local> bindings can only be created in the scalar namespace. Also, none of the other nifty things that L<local> can do (like localising a hash table value) are supported yet.
 
 The C<local> implementation is currently pretty inefficient. It evals a string that returns a sub whenever a frame is entered. Fortunately, perl's compiler is really fast. Also, this overhead is not there at all when you are only using the C<catch> functionality which I anticipate to be the most common usage pattern.
 
