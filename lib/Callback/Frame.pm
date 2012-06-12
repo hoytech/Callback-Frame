@@ -279,26 +279,27 @@ So the root of the problem is that the dynamic environment has not been preserve
 
 By the way, "lexical" and "dynamic" are the lisp terms and I use them because they actually make sense. When it applies to variables, perl confusingly calls dynamic scoping "local" scoping.
 
-Here is how we would fix this code using L<Callback::Frame>:
+Here is how we could fix this code using L<Callback::Frame>:
 
     use AnyEvent;
     use Callback::Frame;
 
-    frame(code => sub {
-      $watcher = AE::timer 0.1, 0,
-        frame(code => sub {
-                        die "some error";
-                      },
-              catch => sub {
-                         print STDERR "Oops: $@";
-                       });
-    })->();
+    frame(
+      code => sub {
+        $watcher = AE::timer 0.1, 0,
+          frame(code => sub {
+                          die "some error";
+                        });
+      }, catch => sub {
+        print STDERR "Oops: $@";
+      }
+    )->();
 
     AE::cv->recv;
 
 Now we see the desired error message:
 
-    Oops: some error at fixed.pl line 7.
+    Oops: some error at fixed.pl line 8.
 
 
 
