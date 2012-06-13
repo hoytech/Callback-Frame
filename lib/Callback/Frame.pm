@@ -329,6 +329,8 @@ If you want you can use simple frame names like C<"accepted"> but if you are rec
 
 All frames you omit the name from will be shown as C<"ANONYMOUS FRAME"> in stack-traces.
 
+One important thing to keep in mind is that frames aren't necessarily always arranged in terms of a stack. Really, frames are more of a tree data structure (known in lisp as a "spaghetti stack"). This occurs most often when two asynchronous request frames are started up concurrently while the same frame is in effect. At this point the "stack" has essentially branched. If you are ever surprised by an exception handler being called twice, this is probably what is happening.
+
 
 
 =head1 "LOCAL" VARIABLES

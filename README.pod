@@ -82,26 +82,27 @@ So the root of the problem is that the dynamic environment has not been preserve
 
 By the way, "lexical" and "dynamic" are the lisp terms and I use them because they actually make sense. When it applies to variables, perl confusingly calls dynamic scoping "local" scoping.
 
-Here is how we would fix this code using L<Callback::Frame>:
+Here is how we could fix this code using L<Callback::Frame>:
 
     use AnyEvent;
     use Callback::Frame;
 
-    frame(code => sub {
-      $watcher = AE::timer 0.1, 0,
-        frame(code => sub {
-                        die "some error";
-                      },
-              catch => sub {
-                         print STDERR "Oops: $@";
-                       });
-    })->();
+    frame(
+      code => sub {
+        $watcher = AE::timer 0.1, 0,
+          frame(code => sub {
+                          die "some error";
+                        });
+      }, catch => sub {
+        print STDERR "Oops: $@";
+      }
+    )->();
 
     AE::cv->recv;
 
 Now we see the desired error message:
 
-    Oops: some error at fixed.pl line 7.
+    Oops: some error at fixed.pl line 8.
 
 
 
@@ -130,6 +131,8 @@ When a C<catch> handler is called, not only is C<$@> set, but also a stack-trace
 If you want you can use simple frame names like C<"accepted"> but if you are recording error messages in a log you might find it useful to name your frames things like C<"accepted connection from $ip:$port at $time"> and C<"connecting to $host (timeout = $timeout seconds)">.
 
 All frames you omit the name from will be shown as C<"ANONYMOUS FRAME"> in stack-traces.
+
+One important thing to keep in mind is that frames aren't necessarily always arranged in terms of a stack. Really, frames are more of a tree data structure (known in lisp as a "spaghetti stack"). This occurs most often when two asynchronous request frames are started up concurrently while the same frame is in effect. At this point the "stack" has essentially branched. If you are ever surprised by an exception handler being called twice, this is probably what is happening.
 
 
 
