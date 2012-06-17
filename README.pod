@@ -108,17 +108,27 @@ Now we see the desired error message:
 
 =head1 USAGE
 
-This module exports one function, C<frame>. This function requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
+This module exports two functions, C<frame> and C<fub>.
 
-B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be wrapped in a new C<frame> call so that the dynamic environment will be correctly re-applied when the callback is invoked.
+C<frame> is the general interface and requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this codref is run, it will re-instate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
-In addition to C<code>, C<frame> also accepts C<catch> and C<local> parameters which are described in detail below.
+B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be wrapped in a new C<frame> or C<fub> call so that the dynamic environment will be correctly re-applied when the callback is invoked.
 
-If you wish to run a coderef inside an existing frame's dynamic environment, when creating a frame you can pass in an existing frame as the C<existing_frame> parameter. When this frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions inside a callback and for extracting/setting a callback's local variables.
+C<fub> is a wrapper around frame and exists to simplify converting existing callbacks into Callback::Frame enabled code. For example, given the following L<AnyEvent> statement:
+
+    $watcher = AE::io $sock, 0, sub { do_stuff() };
+
+In order for the callback to have its dynamic environment maintained, you just need to change it to this:
+
+    $watcher = AE::io $sock, 0, fub { do_stuff() };
+
+C<frame> and C<fub> both also accept C<catch> and C<local> parameters which are described in detail below.
+
+If you wish to run a coderef inside an existing frame's dynamic environment, when creating a frame you can pass in an existing frame as the C<existing_frame> parameter. When this frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions from within some given callback's environment (timeouts for example) and for extracting/setting a callback's local variables.
 
 Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>.
 
-You should almost never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
+You should never need to, but the internal frame stack can be accessed at C<$Callback::Frame::top_of_stack>. When this variable is defined, a frame is currently being executed.
 
 
 
@@ -158,9 +168,9 @@ OK, to make this concrete, after running this bit of code the binding containing
       };
     }
 
-    print "$foo\n";       # 1
-    print $cb->() . "\n"; # 1  <- not 2!
-    print "$foo\n";       # 1
+    say $foo;     # 1
+    say $cb->();  # 1  <- not 2!
+    say $foo;     # 1
 
 Here's a way to "fix" that using Callback::Frame:
 
@@ -175,9 +185,9 @@ Here's a way to "fix" that using Callback::Frame:
       });
     })->();
 
-    print "$foo\n";       # 1
-    print $cb->() . "\n"; # 2  <- hooray!
-    print "$foo\n";       # 1
+    say $foo;     # 1
+    say $cb->();  # 2  <- hooray!
+    say $foo;     # 1
 
 Don't be fooled into thinking that this is a lexical binding though. While the variable C<$foo> points to the binding containing C<2>, all parts of the program will see this binding as demonstrated in the following example:
 
@@ -196,9 +206,9 @@ Don't be fooled into thinking that this is a lexical binding though. While the v
       });
     })->();
 
-    print "$foo\n";       # 1
-    print $cb->() . "\n"; # 2  <- still 2
-    print "$foo\n";       # 1
+    say $foo;     # 1
+    say $cb->();  # 2  <- still 2
+    $foo;         # 1
 
 
 You can install multiple local variables in the same frame:
@@ -207,7 +217,7 @@ You can install multiple local variables in the same frame:
           local => 'main::bar',
           ... );
 
-Note that if you have both C<catch> and C<local> elements in a frame, in the event of an error the local bindings will B<not> be present inside the C<catch> handler (use two frames if you need this).
+Note that if you have both C<catch> and C<local> elements in a frame, in the event of an error the local bindings will B<not> be present inside the C<catch> handler (use a nested frame if you need this).
 
 All variable names must be fully package qualified. The easiest way to do this is to use the ugly C<__PACKAGE__> technique.
 
@@ -254,7 +264,7 @@ Doug Hoyte, C<< <doug@hcsw.org> >>
 
 Copyright 2012 Doug Hoyte.
 
-This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is licensed under the same terms as perl itself.
 
 
 =cut
