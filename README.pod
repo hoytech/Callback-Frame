@@ -59,7 +59,7 @@ Consider the following piece of B<broken> code:
 
     use AnyEvent;
 
-    eval {
+    eval { ## broken!
       $watcher = AE::timer 0.1, 0,
         sub {
           die "some error";
@@ -104,6 +104,8 @@ Now we see the desired error message:
 
     Oops: some error at fixed.pl line 8.
 
+We created two framed to accomplish this: A root frame to contain the exception handler, and another frame to use as a callback. Because the callback frame is created while the root frame is running, the callback will preserve the dynamic environment of the root frame.
+
 
 
 =head1 USAGE
@@ -134,7 +136,7 @@ You should never need to, but the internal frame stack can be accessed at C<$Cal
 
 =head1 NESTING AND STACK-TRACES
 
-Frames can be nested. When an exception is raised, the most deeply nested C<catch> handler is invoked. If this handler itself throws an error, the next most deeply nested handler is invoked with the new exception but the original stack trace.
+Frames can be nested. When an exception is raised, the most deeply nested C<catch> handler is invoked. If this handler itself throws an error, the next most deeply nested handler is invoked with the new exception but the original stack trace. If the last C<catch> handler re-throws the error, the error will simply be thrown to your application from wherever the callback happened to be called (probably not what you want).
 
 When a C<catch> handler is called, not only is C<$@> set, but also a stack-trace string is passed in as the first argument. All frames will be listed in this stack-trace, starting with the most deeply nested frame.
 
@@ -219,7 +221,7 @@ You can install multiple local variables in the same frame:
 
 Note that if you have both C<catch> and C<local> elements in a frame, in the event of an error the local bindings will B<not> be present inside the C<catch> handler (use a nested frame if you need this).
 
-All variable names must be fully package qualified. The easiest way to do this is to use the ugly C<__PACKAGE__> technique.
+All variable names must be fully package qualified. The easiest way to do this for variables in your current package is to use the ugly C<__PACKAGE__ .> technique.
 
 Objects stored in local bindings managed by Callback::Frame will not be destroyed until all references to the frame-wrapped callback that contains the binding, along with all references to any deeper frames, are freed.
 
@@ -233,7 +235,7 @@ The Callback::Frame philosophy is that we actually like callback style and just 
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
-This module depends on C<Guard> to ensure that even when exceptions are thrown, C<local> binding updates aren't lost.
+This module depends on C<Guard> to maintain the C<$Callback::Frame::active_frames> datastructure, and to ensure that even when exceptions are thrown, C<local> binding updates aren't lost.
 
 L<AnyEvent::Debug> is a very interesting and useful module that provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem. Unlike these modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
 

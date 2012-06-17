@@ -1,10 +1,17 @@
+Changes
 COPYING
 lib/Callback/Frame.pm
-MANIFEST			This list of files
+Makefile.PL
+MANIFEST
 MANIFEST.SKIP
 MYMETA.json
 MYMETA.yml
+README
 t/basic.t
+t/basic_fub.t
+t/existing.t
+t/general.t
 t/guard.t
 t/locals.t
+t/preserve_err.t
 t/rethrow.t

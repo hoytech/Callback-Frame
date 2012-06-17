@@ -5,3 +5,4 @@ MYMETA.*
 Callback-Frame-*.tar.gz
 blib/
 pm_to_blib
+MANIFEST.bak
