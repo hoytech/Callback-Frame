@@ -87,10 +87,44 @@ sub frame {
 
     local $top_of_stack = $new_frame;
 
-    $code = generate_local_wrapped_code($top_of_stack, $code);
+    my $frame_i = $top_of_stack;
 
     my $val = eval {
+      ## Find applicable local vars
+
+      my $local_refs = {};
+      my $temp_copies = {};
+
+      for(; $frame_i; $frame_i = $frame_i->{down}) {
+        next unless exists $frame_i->{locals};
+        foreach my $k (keys %{$frame_i->{locals}}) {
+          next if exists $local_refs->{$k};
+          $local_refs->{$k} = \$frame_i->{locals}->{$k};
+        }
+      }
+
+      ## Backup local vars
+
+      foreach my $var (keys %$local_refs) {
+        no strict qw/refs/;
+        $temp_copies->{$var} = $$var;
+        $$var = ${$local_refs->{$var}};
+      }
+
+      ## Install code that will restore local vars
+
+      scope_guard {
+        foreach my $var (keys %$local_refs) {
+          no strict qw/refs/;
+          ${$local_refs->{$var}} = $$var;
+          $$var = $temp_copies->{$var};
+        }
+      };
+
+      ## Actually run the callback
+
       $@ = $orig_error;
+
       $code->(@_);
     };
 
@@ -159,41 +193,6 @@ sub generate_trace {
   return $trace;
 }
 
-
-sub generate_local_wrapped_code {
-  my ($frame_i, $code) = @_;
-
-  my $local_refs = {};
-
-  for(; $frame_i; $frame_i = $frame_i->{down}) {
-    next unless exists $frame_i->{locals};
-    foreach my $k (keys %{$frame_i->{locals}}) {
-      next if exists $local_refs->{$k};
-      $local_refs->{$k} = \$frame_i->{locals}->{$k};
-    }
-  }
-
-  return $code unless keys %{$local_refs};
-
-  my $codestr = 'sub { no strict qw/refs/;';
-
-  foreach my $k (keys %$local_refs) {
-    $codestr .= qq{ local \$$k = \${\$local_refs->{q{$k}}}; };
-  }
-
-  $codestr .= ' scope_guard { ';
-  foreach my $k (keys %$local_refs) {
-    $codestr .= qq{ \${\$local_refs->{q{$k}}} = \$$k; };
-  }
-  $codestr .= ' }; ';
-
-  $codestr .= ' return $code->(@_); } ';
-
-  my $new_code = eval($codestr);
-  die "local frame wrapper compile failure: $@ ($codestr)\n" if $@;
-
-  return $new_code;
-}
 
 
 1;
@@ -458,9 +457,6 @@ L<UNWIND-PROTECT vs. Continuations|http://www.nhplace.com/kent/PFAQ/unwind-prote
 
 For now, C<local> bindings can only be created in the scalar namespace. Also, none of the other nifty things that L<local> can do (like localising a hash table value) are supported yet.
 
-The C<local> implementation is currently pretty inefficient. It evals a string that returns a sub whenever a frame is entered. Fortunately, perl's compiler is really fast. Also, this overhead is not there at all when you are only using the C<catch> functionality which I anticipate to be the most common usage pattern.
-
-
 
 
 =head1 AUTHOR
@@ -478,9 +474,6 @@ This module is licensed under the same terms as perl itself.
 
 
 
+TODO:
 
-
-
-TODO
-
-* Find better/faster way to restore locals
+  * Maybe rewrite synopsis to use fub?
