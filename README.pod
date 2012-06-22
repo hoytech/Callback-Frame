@@ -50,6 +50,8 @@ will print C<123> even though C<$var> is no longer in scope when the callback is
 
 Sometimes people call these anonymous functions that reference variables in their surrounding lexical scope "closures". Whatever you call them, they are essential for convenient and efficient asynchronous programming. 
 
+The Callback::Frame philosophy is that for many applications we really like callback style and don't wish to run (or pretend to run) multiple blocking tasks at once. Callback::Frame just tries to simplify the management of dynamic environments (defined below) while leaving callback style alone.
+
 
 =head1 DESCRIPTION
 
@@ -136,6 +138,8 @@ You should never need to, but the internal frame stack can be accessed at C<$Cal
 
 =head1 NESTING AND STACK-TRACES
 
+Callback::Frame tries to make adding error handling support to an existing asynchronous application as easy as possible by not forcing you to pass extra parameters around. It should also make lifer easier because as a side effect of adding error checking it also can be made to produce detailed and useful "stack traces" that track the callback history of some connection or transaction.
+
 Frames can be nested. When an exception is raised, the most deeply nested C<catch> handler is invoked. If this handler itself throws an error, the next most deeply nested handler is invoked with the new exception but the original stack trace. If the last C<catch> handler re-throws the error, the error will simply be thrown to your application from wherever the callback happened to be called (probably not what you want).
 
 When a C<catch> handler is called, not only is C<$@> set, but also a stack-trace string is passed in as the first argument. All frames will be listed in this stack-trace, starting with the most deeply nested frame.
@@ -192,7 +196,7 @@ Here's a way to "fix" that using Callback::Frame:
     say $cb->();  # 2  <- hooray!
     say $foo;     # 1
 
-Don't be fooled into thinking that this is a lexical binding though. While the variable C<$foo> points to the binding containing C<2>, all parts of the program will see this binding:
+Don't be fooled into thinking that this is a lexical binding though. While the callback C<$cb> is executing, all parts of the program will see the C<2> binding:
 
     our $foo = 1;
     my $cb;
@@ -231,8 +235,6 @@ Objects stored in local bindings managed by Callback::Frame will not be destroye
 =head1 SEE ALSO
 
 L<The Callback::Frame github repo|https://github.com/hoytech/Callback-Frame>
-
-The Callback::Frame philosophy is that we actually like callback style and just want to simplify the reseting of dynamic environments as necessary. This module should make adding error handling support to an existing asynchronous application as easy as possible (it shouldn't force you to pass extra parameters around). Finally, this module should make lifer easier because as a side effect of adding error checking it should also produce detailed and useful stack traces.
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
