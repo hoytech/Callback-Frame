@@ -365,7 +365,7 @@ However, with dynamic variables the same variable can refer to different binding
 
 Because any code in any file, function, or package can access a dynamic variable, they are the opposite of local. They are global. However, the bindings are only global for a little while at a time. After a while they will go out of scope and then they are no longer visible at all. Or sometimes they will get "shadowed" by some other binding and will come back again later.
 
-OK, to make this concrete, after running this bit of code the binding containing C<2> is lost forever:
+OK, to make this concrete, here the binding containing C<2> is lost forever:
 
     our $foo = 1;
     my $cb;
@@ -441,7 +441,7 @@ L<The Callback::Frame github repo|https://github.com/hoytech/Callback-Frame>
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> &c.
 
-This module depends on L<Guard> to maintain the C<$Callback::Frame::active_frames> datastructure, and to ensure that even when exceptions are thrown, C<local> binding updates aren't lost.
+This module depends on L<Guard> to maintain the C<$Callback::Frame::active_frames> datastructure and to ensure that C<local> binding updates aren't lost even when exceptions or other non-local returns occur.
 
 L<AnyEvent::Debug> is a very interesting and useful module that provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem. Unlike these modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
 
