@@ -4,8 +4,6 @@ lib/Callback/Frame.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
-MYMETA.json
-MYMETA.yml
 README
 t/basic.t
 t/basic_fub.t
