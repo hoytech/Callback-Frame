@@ -1,3 +1,9 @@
+1.003   2013-02-27
+  * Remove MYMETA from distribution
+  * Add license and github meta info
+  * Document how to use from libraries
+  * Misc doc edits
+
 0.2   2012-06-26
   * Much better local implementation
   * Better docs
