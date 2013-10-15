@@ -200,11 +200,11 @@ sub generate_trace {
 
 __END__
 
+=encoding utf-8
 
 =head1 NAME
 
 Callback::Frame - Preserve error handlers and "local" variables across callbacks
-
 
 =head1 SYNOPSIS
 
