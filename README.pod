@@ -78,9 +78,9 @@ The intent behind the C<eval> above is obviously to catch any exceptions thrown 
 
 (The above applies to L<EV> which is a well-designed event loop. Other event loops may fail more catastrophically.)
 
-So the root of the problem is that the dynamic environment has not been preserved. In this case it is the dynamic exception handlers that we would have liked to preserve. In some other cases we would like to preserve dynamically scoped (aka "local") variables (see below).
+The root of the problem is that the dynamic environment has not been preserved. In this case it is the dynamic exception handlers that we would have liked to preserve. In some other cases we would like to preserve dynamically scoped (aka "local") variables (see below).
 
-By the way, "lexical" and "dynamic" are the lisp terms. When it applies to variables, perl confusingly calls dynamic scoping "local" scoping, even though the scope is temporal, not local (see below).
+By the way, "lexical" and "dynamic" are the lisp terms. When it applies to variables, perl confusingly calls dynamic scoping "local" scoping, even though the scope is temporal, not local.
 
 Here is how we could fix the code above using L<Callback::Frame>:
 
@@ -109,7 +109,7 @@ We created two frames to accomplish this: A root frame with C<frame_try> which c
 
 This module exports four subs: C<frame>, C<fub>, C<frame_try>, and C<frame_catch>.
 
-C<frame> is the general interface. All the other subs are just syntactic sugar around C<frame>. C<frame> requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this wrapped codref is run, it will reinstate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
+C<frame> is the general interface. The other subs are just syntactic sugar around C<frame>. C<frame> requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this wrapped codref is run, it will reinstate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
 C<frame> also accepts C<catch>, C<local>, C<existing_frame>, and C<name> parameters which are described below.
 
@@ -243,7 +243,7 @@ Objects stored in local bindings managed by Callback::Frame will not be destroye
 
 L<The Callback::Frame github repo|https://github.com/hoytech/Callback-Frame>
 
-L<AnyEvent::Task> uses Callback::Frame.
+L<AnyEvent::Task> uses Callback::Frame and its docs have more discussion on exception handling in async apps.
 
 This module's C<catch> syntax is of course modeled after "normal language" style exception handling as implemented by L<Try::Tiny> and similar.
 
@@ -251,7 +251,7 @@ This module depends on L<Guard> to maintain the C<$Callback::Frame::active_frame
 
 L<AnyEvent::Debug> provides an interactive debugger for AnyEvent applications and uses some of the same techniques that Callback::Frame does. L<AnyEvent::Callback> and L<AnyEvent::CallbackStack> sort of solve the dynamic error handler problem. Unlike these modules, Callback::Frame is not related at all to L<AnyEvent>, except that it happens to be useful in AnyEvent libraries and applications (among other things).
 
-L<Promises> and L<Future> are somewhat similar modules however they require a more drastic restructuring of your async code because you need to pass "promise/future" objects around to maintain context. Callback::Frame is context-less (or rather the context is implicit in the dynamic state).
+L<Promises> and L<Future> are similar modules but they solve a slightly different problem. In the area of exception handling they require a more drastic restructuring of your async code because you need to pass "promise/future" objects around to maintain context. Callback::Frame is context-less (or rather the context is implicit in the dynamic state). That said, both of these modules should be compatible with Callback::Frame.
 
 Miscellaneous other modules: L<IO::Lambda::Backtrace>, L<POE::Filter::ErrorProof>
 
