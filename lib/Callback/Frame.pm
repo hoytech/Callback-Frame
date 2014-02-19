@@ -6,7 +6,7 @@ our $VERSION = '1.003';
 
 require Exporter;
 use base 'Exporter';
-our @EXPORT = qw(frame fub);
+our @EXPORT = qw(frame fub frame_try frame_catch);
 
 use Scalar::Util;
 use Carp qw/croak/;
@@ -40,6 +40,7 @@ sub frame {
 
   $name ||= 'ANONYMOUS FRAME';
   my ($package, $filename, $line) = caller;
+  ($package, $filename, $line) = caller(1) if $package eq __PACKAGE__; ## if we're called from fub or frame_try
   $name = "$filename:$line - $name";
 
   defined $code || croak "frame needs a 'code' callback";
@@ -193,6 +194,20 @@ sub generate_trace {
   return $trace;
 }
 
+
+sub frame_try (&;@) {
+  my ($try_block, $catch_block) = @_;
+
+  return frame(code => $try_block, catch => $catch_block)->();
+}
+
+sub frame_catch (&) {
+  my ($block) = @_;
+
+  croak "Useless bare frame_catch" unless wantarray;
+
+  return $block;
+}
 
 
 1;
