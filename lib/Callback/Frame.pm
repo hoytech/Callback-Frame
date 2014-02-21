@@ -2,7 +2,7 @@ package Callback::Frame;
 
 use strict;
 
-our $VERSION = '1.003';
+our $VERSION = '1.100';
 
 require Exporter;
 use base 'Exporter';
