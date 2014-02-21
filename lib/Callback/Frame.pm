@@ -295,13 +295,13 @@ Consider the following piece of B<broken> code:
 
     AE::cv->recv;
 
-The intent behind the C<eval> above is obviously to catch any exceptions thrown inside the callback. However, this will not work because the C<eval> will only be in effect while installing the callback in the event loop, not while running the callback. When the event loop calls the callback, it will probably wrap its own C<eval> around the callback and you will see something like this:
+The intent behind the C<eval> above is obviously to catch any exceptions thrown by the callback. However, this will not work because the C<eval> will only be in effect while installing the callback in the event loop, not while running the callback. When the event loop calls the callback, it will probably wrap its own C<eval> around the callback and you will see something like this:
 
     EV: error in callback (ignoring): some error at broken.pl line 6.
 
 (The above applies to L<EV> which is a well-designed event loop. Other event loops may fail more catastrophically.)
 
-The root of the problem is that the dynamic environment has not been preserved. In this case it is the dynamic exception handlers that we would have liked to preserve. In some other cases we would like to preserve dynamically scoped (aka "local") variables (see below).
+The root of the problem is that the dynamic environment has not been preserved. In this case it is the dynamic exception handlers that we would like to preserve. In some other cases we would like to preserve dynamically scoped (aka "local") variables (see below).
 
 By the way, "lexical" and "dynamic" are the lisp terms. When it applies to variables, perl confusingly calls dynamic scoping "local" scoping, even though the scope is temporal, not local.
 
@@ -346,7 +346,7 @@ In order for the callback to have its dynamic environment maintained, you just n
 
 B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be created with C<frame> or C<fub> so that the dynamic environment will be correctly re-applied when the callback is invoked.
 
-The C<frame_try> and C<frame_catch> subs are equivalent to a call to C<frame> with C<code> and C<catch> parameters set respectively and where the resulting frame is immediately executed.
+The C<frame_try> and C<frame_catch> subs are equivalent to a call to C<frame> with C<code> and C<catch> parameters. However, unlike with C<frame>, the frame is executed immediately.
 
 Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>. Sometimes libraries like to automatically wrap a callback in a frame unless it already is one:
 
@@ -447,7 +447,7 @@ Don't be fooled into thinking that this is a lexical binding though. While the c
 
 You can install multiple local variables in the same frame with the C<frame> interface:
 
-    frame(local => __PACKAGE__ . '::foo',
+    frame(local => __PACKAGE__.'::foo',
           local => 'main::bar',
           code => { })->();
 
@@ -495,7 +495,7 @@ Doug Hoyte, C<< <doug@hcsw.org> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2012-2013 Doug Hoyte.
+Copyright 2012-2014 Doug Hoyte.
 
 This module is licensed under the same terms as perl itself.
 
