@@ -6,7 +6,7 @@ our $VERSION = '1.003';
 
 require Exporter;
 use base 'Exporter';
-our @EXPORT = qw(frame fub frame_try frame_catch);
+our @EXPORT = qw(frame fub frame_try frame_catch frame_local);
 
 use Scalar::Util;
 use Carp qw/croak/;
@@ -209,6 +209,12 @@ sub frame_catch (&) {
   return $block;
 }
 
+sub frame_local ($&) {
+  my ($local, $block) = @_;
+
+  return frame(code => $block, local => $local)->();
+}
+
 
 1;
 
@@ -324,7 +330,7 @@ We created two frames to accomplish this: A root frame with C<frame_try> which c
 
 =head1 USAGE
 
-This module exports four subs: C<frame>, C<fub>, C<frame_try>, and C<frame_catch>.
+This module exports five subs: C<frame>, C<fub>, C<frame_try>, C<frame_catch>, and C<frame_local>.
 
 C<frame> is the general interface. The other subs are just syntactic sugar around C<frame>. C<frame> requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this wrapped codref is run, it will reinstate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
@@ -378,9 +384,9 @@ Since multiple frames can be created within the same parent frame and therefore 
 
 =head1 "LOCAL" VARIABLES
 
-In the same way that using C<catch> and C<frame_catch> preserve the dynamic environment of error handlers, the C<local> parameter to C<frame> can be used to preserve the dynamic environment of local variables. Of course, the scope of these bindings is not actually local in the physical sense of the word, only in the perl sense.
+In the same way that using C<frame_catch> or the C<catch> parameter to C<frame> preserves the dynamic environment of error handlers, the C<frame_local> function or C<local> parameter to C<frame> can be used to preserve the dynamic environment of local variables. Of course, the scope of these bindings is not actually local in the physical sense of the word, only in the perl sense.
 
-Technically, C<local> maintains the dynamic environment of B<bindings>. The distinction between variables and bindings is subtle but important. See, when a lexical binding is created, it is there "forever" -- or at least until it is no longer reachable by your program according to the rules of lexical scoping. Therefore, bindings are statically mapped to lexical variables and it is redundant to distinguish between the two.
+Technically, perl's C<local> maintains the dynamic environment of B<bindings>. The distinction between variables and bindings is subtle but important. See, when a lexical binding is created, it is there "forever" -- or at least until it is no longer reachable by your program according to the rules of lexical scoping. Therefore, bindings are statically mapped to lexical variables and it is redundant to distinguish between the two.
 
 However, with dynamic variables the same variable accessed in the same part of your code can refer to different bindings at different times. That's why they are called "dynamic" and lexical variables are sometimes called "static".
 
@@ -408,13 +414,12 @@ Here's a way to "fix" that using Callback::Frame:
     our $foo = 1;
     my $cb;
 
-    frame(local => __PACKAGE__ . '::foo',
-          code => sub {
+    frame_local __PACKAGE__.'::foo', sub {
       $foo = 2;
       $cb = fub {
         return $foo;
       };
-    })->();
+    };
 
     say $foo;     # 1
     say $cb->();  # 2  <- hooray!
@@ -429,28 +434,26 @@ Don't be fooled into thinking that this is a lexical binding though. While the c
       return $foo;
     }
 
-    frame(local => __PACKAGE__ . '::foo',
-          code => sub {
+    frame_local __PACKAGE__.'::foo', sub {
       $foo = 2;
       $cb = fub {
         return global_foo_getter();
       };
-    })->();
+    };
 
     say $foo;     # 1
     say $cb->();  # 2  <- still 2
     say $foo;     # 1
 
-
-You can install multiple local variables in the same frame:
+You can install multiple local variables in the same frame with the C<frame> interface:
 
     frame(local => __PACKAGE__ . '::foo',
           local => 'main::bar',
-          ... );
+          code => { })->();
 
 Note that if you have both C<catch> and C<local> elements in a frame, in the event of an error the local bindings will B<not> be present inside the C<catch> handler (use a nested frame if you need this).
 
-All variable names must be fully package qualified. The best way to do this for variables in your current package is to use the ugly C<__PACKAGE__> technique.
+Variable names must be fully package qualified. The best way to do this for variables in your current package is to use the ugly C<__PACKAGE__> technique.
 
 Objects stored in local bindings managed by Callback::Frame will not be destroyed until all references to the frame-wrapped callback that contains the binding are destroyed, along with all references to any deeper frames.
 
@@ -497,13 +500,3 @@ Copyright 2012-2013 Doug Hoyte.
 This module is licensed under the same terms as perl itself.
 
 =cut
-
-
-
-
-TODO:
-
-? Nicer syntax for establishing local binding and executing the frame... frame_local?
-    frame_local __PACKAGE__ . '::foo', sub {
-      $foo = 123;
-    };
