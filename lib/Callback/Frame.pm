@@ -351,7 +351,7 @@ The C<frame_try> and C<frame_catch> subs are equivalent to a call to C<frame> wi
 Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>. Sometimes libraries like to automatically wrap a callback in a frame unless it already is one:
 
     if (!Callback::Frame::is_frame($callback)) {
-      $callback = fub { $callback->(); };
+      $callback = frame(code => $callback);
     }
 
 If you wish to run a coderef inside an existing frame's dynamic environment, when creating a frame you can pass in an existing frame as the C<existing_frame> parameter. When this frame is executed, the C<code> of the frame will be run inside C<existing_frame>'s dynamic environment. This is useful for throwing exceptions from within some given callback's environment (timeouts for example):
