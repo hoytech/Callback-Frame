@@ -500,3 +500,9 @@ Copyright 2012-2014 Doug Hoyte.
 This module is licensed under the same terms as perl itself.
 
 =cut
+
+
+
+TODO:
+
+  * frame_try should check to see what context it is being called on and preserve this for its try callback
