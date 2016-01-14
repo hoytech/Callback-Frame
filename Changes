@@ -1,3 +1,7 @@
+1.101   2015-01-14
+  * Mistake in documentation: The way it suggested to wrap an
+    existing callback in a frame wouldn't work.
+
 1.100   2014-02-20
   * frame_try/frame_catch and frame_local features
 
