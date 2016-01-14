@@ -475,7 +475,7 @@ L<Promises> and L<Future> are similar modules but they solve a slightly differen
 
 Miscellaneous other modules: L<IO::Lambda::Backtrace>, L<POE::Filter::ErrorProof>
 
-Python Tornado's L<StackContext|http://www.tornadoweb.org/documentation/stack_context.html> and C<async_callback>
+Python Tornado's L<StackContext|http://www.tornadoweb.org/en/branch2.3/stack_context.html> and C<async_callback>
 
 L<Let Over Lambda, Chapter 2|http://letoverlambda.com/index.cl/guest/chap2.html>
 
