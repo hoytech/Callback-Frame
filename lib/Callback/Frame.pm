@@ -2,7 +2,7 @@ package Callback::Frame;
 
 use strict;
 
-our $VERSION = '1.101';
+our $VERSION = '1.102';
 
 require Exporter;
 use base 'Exporter';
@@ -515,7 +515,7 @@ Doug Hoyte, C<< <doug@hcsw.org> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2012-2014 Doug Hoyte.
+Copyright 2012-2016 Doug Hoyte.
 
 This module is licensed under the same terms as perl itself.
 

@@ -1,3 +1,9 @@
+1.102   2016-03-07
+  * Fixed broken SEE ALSO link (thanks Mohammad Anwar)
+  * frame_void and frame_try_void features that let you create
+    new frames in void contexts that can't access the contexts
+    that were available when they were created.
+
 1.101   2015-01-14
   * Mistake in documentation: The way it suggested to wrap an
     existing callback in a frame wouldn't work.
