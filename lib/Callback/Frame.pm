@@ -6,7 +6,7 @@ our $VERSION = '1.101';
 
 require Exporter;
 use base 'Exporter';
-our @EXPORT = qw(frame fub frame_try frame_catch frame_local);
+our @EXPORT = qw(frame fub frame_try frame_try_void frame_catch frame_local frame_void);
 
 use Scalar::Util;
 use Carp qw/croak/;
@@ -195,8 +195,26 @@ sub generate_trace {
 }
 
 
+sub frame_void (&) {
+  my ($block) = @_;
+
+  local $top_of_stack;
+  local $active_frames = {};
+
+  $block->();
+}
+
 sub frame_try (&;@) {
   my ($try_block, $catch_block) = @_;
+
+  return frame(code => $try_block, catch => $catch_block)->();
+}
+
+sub frame_try_void (&;@) {
+  my ($try_block, $catch_block) = @_;
+
+  local $top_of_stack;
+  local $active_frames = {};
 
   return frame(code => $try_block, catch => $catch_block)->();
 }
@@ -330,7 +348,7 @@ We created two frames to accomplish this: A root frame with C<frame_try> which c
 
 =head1 USAGE
 
-This module exports five subs: C<frame>, C<fub>, C<frame_try>, C<frame_catch>, and C<frame_local>.
+This module exports the following subs: C<frame>, C<fub>, C<frame_try>, C<frame_catch>, C<frame_local>, and C<frame_void>.
 
 C<frame> is the general interface. The other subs are just syntactic sugar around C<frame>. C<frame> requires at least a C<code> argument which should be a coderef (a function or a closure). It will return another coderef that "wraps" the coderef you passed in. When this wrapped codref is run, it will reinstate the dynamic environment that was present when the frame was created, and then run the coderef that you passed in as C<code>.
 
@@ -347,6 +365,8 @@ In order for the callback to have its dynamic environment maintained, you just n
 B<IMPORTANT NOTE>: All callbacks that may be invoked outside the dynamic environment of the current frame should be created with C<frame> or C<fub> so that the dynamic environment will be correctly re-applied when the callback is invoked.
 
 The C<frame_try> and C<frame_catch> subs are equivalent to a call to C<frame> with C<code> and C<catch> parameters. However, unlike with C<frame>, the frame is executed immediately.
+
+C<frame_void> takes a single callback argument. This can be useful if you wish to kick off an unassociated asynchronous action while handling. If the action is run in void context, there is no way for it to throw an exception that will affect your request, or to access its local variables. Note that you probably should install a separate C<frame_catch> in case the unassociated operation throws exceptions.
 
 Libraries that wrap callbacks in frames can use the C<Callback::Frame::is_frame()> function to determine if a given callback is already wrapped in a frame. It returns true if the callback is wrapped in a frame and is therefore suitable for use with C<existing_frame>. Sometimes libraries like to automatically wrap a callback in a frame unless it already is one:
 
