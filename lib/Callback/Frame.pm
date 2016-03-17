@@ -477,6 +477,48 @@ Variable names must be fully package qualified. The best way to do this for vari
 
 Objects stored in local bindings managed by Callback::Frame will not be destroyed until all references to the frame-wrapped callback that contains the binding are destroyed, along with all references to any deeper frames.
 
+Here is an example of a common use case where we want to maintain a request's dynamic state. In this case it's an asynchronous L<Mojolicious> application and we want the log messages associated with each request to be tagged with an associated request ID:
+
+    use Mojolicious::Lite;
+    use Mojo::IOLoop;
+
+    use Callback::Frame;
+    use Session::Token;
+
+    {
+      package logger;
+
+      our $request_id = '-';
+
+      sub log {
+        my $msg = shift;
+        print "LOG [$request_id]: $msg\n";
+      }
+    }
+
+    get '/' => sub {
+      my $c = shift;
+
+      frame_local 'logger::request_id', sub {
+        $logger::request_id = Session::Token->new->get;
+
+        my $sleep = rand(3) + 1;
+
+        logger::log("Sleeping for $sleep seconds");
+
+        Mojo::IOLoop->timer($sleep => fub { ## <-- fub here is important!
+          logger::log("All finished");
+          $c->render(text => 'blah blah');
+        });
+      };
+    };
+
+    app->start;
+
+Note the C<fub> in the example. If you forget to use C<fub> anywhere then all log messages issued by this callback (and all the callbacks it creates -- even if created with C<fub>) will be tagged with C<-> instead of the request ID.
+
+For a more structured approach to logging, please also see L<Log::Defer>.
+
 
 
 =head1 SEE ALSO
