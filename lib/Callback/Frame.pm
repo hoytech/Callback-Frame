@@ -1,6 +1,7 @@
 package Callback::Frame;
 
 use strict;
+use warnings;
 
 our $VERSION = '1.102';
 
